@@ -1,0 +1,25 @@
+<configuration>
+    <appender name="rollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/myApp.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- Each file will be 1MB max -->
+            <fileNamePattern>logs/myApp.%d{yyyy-MM-dd_HH-mm-ss}.%i.log</fileNamePattern>
+            <maxFileSize>1MB</maxFileSize>
+            <!-- Keep 10 rolled-over log files -->
+            <maxHistory>10</maxHistory>
+            <!-- Cap total log folder size at 10MB -->
+            <totalSizeCap>10MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.app.trlapp" level="INFO" additivity="false">
+        <appender-ref ref="rollingFile" />
+    </logger>
+
+    <root level="WARN">
+        <appender-ref ref="rollingFile" />
+    </root>
+</configuration>
