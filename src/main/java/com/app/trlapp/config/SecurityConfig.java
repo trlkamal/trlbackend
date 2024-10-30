@@ -341,7 +341,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(frontendURL));
+        configuration.setAllowedOrigins(Arrays.asList("http://192.168.43.19:5173/",frontendURL));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("AES-Encrypted-Username", "AES-Encrypted-Password", "*"));
         configuration.setAllowCredentials(true);
