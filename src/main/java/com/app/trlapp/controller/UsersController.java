@@ -1,7 +1,4 @@
 package com.app.trlapp.controller;
-
-import com.app.trlapp.config.JwtAuthenticationFilter;
-import com.app.trlapp.dto.AuthRequestDto;
 import com.app.trlapp.dto.ErrorResponse;
 import com.app.trlapp.model.LoginHandler;
 import com.app.trlapp.model.Users;
@@ -11,25 +8,17 @@ import com.app.trlapp.service.SessionService;
 import com.app.trlapp.service.UsersService;
 import com.app.trlapp.util.AESUtil;
 import com.app.trlapp.util.JwtUtil;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,13 +30,15 @@ import java.util.UUID;
 public class UsersController {
 	@Autowired
     private  LoginHandlerService  loginHandlerService ;
-	@Value("${master.key}")
-    private String masterKey;
-    @Value("${encrypted.secretKey}")
+	
+    @Autowired
     private String encryptedSecretKey;
-    @Value("${iv.parameter}")
+
+    @Autowired
+    private String masterKey;
+
+    @Autowired
     private String ivParameter;
-  
     @Autowired
     private UsersService usersService;
 
@@ -81,6 +72,16 @@ public class UsersController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                  .body("Error creating user: " + e.getMessage()); // Return 500 for internal errors
         }}
+    @GetMapping("/getServer")
+    public ResponseEntity<String> server() {
+        if (System.getenv("DB_USERNAME") != null) {
+            return ResponseEntity.ok("<h1>Server active now ready</h1>");
+        } else {
+            return ResponseEntity.status(503).body("Server environment variable is not accessible");
+        }
+    }
+
+    
     @GetMapping("/user/{userId}")
     public ResponseEntity<Users> getUserById(@PathVariable String userId) {
         UUID UUid = UUID.fromString(userId); // Convert string to UUID
@@ -200,6 +201,8 @@ public class UsersController {
             HttpServletRequest request, HttpServletResponse response) throws Exception {
          //Decrypt Secrect Key 
     	 logger.info("Login attempt for user: {}", encryptedUsername);
+    	 
+    	 
     	 String decryptedUsername = AESUtil.decryptUserName(encryptedUsername,  masterKey, ivParameter );
     	
     	 String decryptPassword = AESUtil.decryptPassword(encryptedPassword,  masterKey, ivParameter );

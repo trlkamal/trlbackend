@@ -42,10 +42,9 @@ import org.springframework.security.web.header.writers.ContentSecurityPolicyHead
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-	String fdUrl = System.getenv("FD_URL");
-	String BdUrl = System.getenv("BD_URL");
 	String frontendURL = System.getenv("frontendUrl");
 	String  backendURL = System.getenv("backendUrl");
+	String apiDocsPath= System.getenv("API_PATH");
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final AccessDeniedHandler accessDeniedHandler;
@@ -55,8 +54,7 @@ public class SecurityConfig {
     private final RateLimiterService rateLimiterService;
     private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
     private final AuthenticationService authenticationService;
-    @Value("${custom.api-docs.path}")
-    private String apiDocsPath;
+
     
     @Autowired
     public SecurityConfig(JwtUtil jwtUtil, UserDetailsService userDetailsService, 
@@ -88,27 +86,10 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .headers(headers -> headers
-                .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
-                .contentSecurityPolicy(csp -> csp
-                	    .policyDirectives(
-                	        "default-src 'self'; " +
-                	        "script-src 'self' " + frontendURL + " https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " + // Allows external scripts
-                	        "style-src 'self' https://fonts.googleapis.com; " +  // Allows styles from Google Fonts
-                	        "font-src 'self' https://fonts.gstatic.com; " + // Allows Google Fonts
-                	        "img-src 'self' data:; " + // Allows images from 'self' and data URLs
-                	        "connect-src 'self' " + frontendURL + " " + backendURL + "; " +  // Allows connections to backend and frontend URLs
-                	        "object-src 'none'; " + // Blocks Flash and similar content
-                	        "frame-ancestors 'self'; " + // Prevents clickjacking
-                	        "form-action 'self'; " + // Restricts form submissions to 'self'
-                	        "base-uri 'self'; " +  // Restricts base tag to 'self'
-                	        "upgrade-insecure-requests;" // Forces HTTPS connections
-                	    )
-                	) )
             .authorizeHttpRequests(authorize -> authorize
             		.requestMatchers("/api/auth/login",
                             "/swagger-ui/**", "/v3/api-docs/**", 
-                            "/swagger-ui.html","/custom-swagger-ui/**","/custom-swagger-ui",apiDocsPath).permitAll()
+                            "/swagger-ui.html","/custom-swagger-ui/**","/api/getServer","/custom-swagger-ui",apiDocsPath).permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/create").access((authentication, context) -> {
                     Authentication auth = authentication.get();
                     boolean hasAdminRole = auth.getAuthorities().stream()
@@ -191,9 +172,11 @@ public class SecurityConfig {
                     Authentication auth = authentication.get();
                     boolean hasAdminRole = auth.getAuthorities().stream()
                         .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
+                    boolean hasUserRole = auth.getAuthorities().stream()
+                            .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_USER"));
                     boolean hasCreateSalePermission = auth.getAuthorities().stream()
                         .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("CREATE_SALE"));
-                    return new AuthorizationDecision(hasAdminRole && hasCreateSalePermission);
+                    return new AuthorizationDecision( (hasAdminRole || hasUserRole )&& hasCreateSalePermission);
                 })
                 .requestMatchers(HttpMethod.GET, "/api/sales/**").access((authentication, context) -> {
                     Authentication auth = authentication.get();
@@ -358,7 +341,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", fdUrl));
+        configuration.setAllowedOrigins(Arrays.asList(frontendURL));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("AES-Encrypted-Username", "AES-Encrypted-Password", "*"));
         configuration.setAllowCredentials(true);

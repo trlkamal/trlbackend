@@ -77,7 +77,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String loginPath = "/api/auth/login";
         String apiDocsPath = encryptionConfig.getApiDocsPath();
         String path = request.getRequestURI();
-        if (path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs")||path.startsWith(apiDocsPath)) {
+        if (path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs")||path.startsWith(apiDocsPath)||path.startsWith("/api/getServer")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -97,7 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             	 
             	
             	 
-            	 String masterKey  = encryptionConfig.getMasterkey();
+            	 String masterKey  = encryptionConfig.getMasterKey();
             	 
             	 
             	 usernameFromRequestUrl = AESUtil.decryptUserName(request.getHeader("aes-encrypted-username"),  masterKey, ivParameter );
@@ -197,7 +197,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         	 
         	
         	 
-        	 String masterKey  = encryptionConfig.getMasterkey();
+        	 String masterKey  = encryptionConfig.getMasterKey();
         	 
         	
         	 
